@@ -1,42 +1,44 @@
-from flask import Flask, request, jsonify
-from flask_restful import Resource, Api
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
+import json
+from flask import Flask, jsonify
 import os
+from src.constants.http_status_codes import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from src.auth import auth
+from src.customers import customers
+from src.database import db
+from flask_jwt_extended import JWTManager
+from flasgger import Swagger, swag_from
+from src.config.swagger import template, swagger_config
 
-#Init app
-app = Flask(__name__)
-api = Api(app)
-basedir = os.path.abspath(os.path.dirname(__file__))
 
-class customers(Resource):
-    def get(self, id):
-        try:
-            response = jsonify({'customers': 'john'})
-        except IndexError: 
-            message = f"Could't find cliend id {id}"
-            response = {'status': "Error", 'message': message}
-        except Exception: 
-            message = "Unknown error. Contact API admin."
-            response = {'status': "Error", 'message': message}
-        return jsonify(response)
-    
-api.add_resource(customers, '/customers/<int:id>')
-#Database
-PG_USER = "root"#os.environ['PG_USER']
-PG_PWD = "TU&m2021"#os.environ['PG_PWD']
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{PG_USER}:{PG_PWD}@localhost:5432/api'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__,
+    instance_relative_config = True)
 
-#Init DB
-db = SQLAlchemy(app)
+app.config.from_mapping(
+    SECRET_KEY = os.environ.get("SECRET_KEY"),
+    SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DB_URI"),
+    SQLALCHEMY_TRACK_MODIFICATIONS = False,
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY"),
+    SWAGGER = {
+        "title": "Premium Studio API",
+        "uiversion": 3
+    }
+)
 
-#Init Marshmallow
-ma = Marshmallow(app)
+db.app = app
+db.init_app(app)
 
-@app.route('/', methods=['GET'])
-def get():
-    return jsonify({'msg': 'Hello World 2'})
+JWTManager(app)
+Swagger(app, config=swagger_config, template=template)
+app.register_blueprint(auth)
+app.register_blueprint(customers)
+
+@app.errorhandler(HTTP_404_NOT_FOUND)
+def handle_404(e):
+    return jsonify({"error": "Not found."}), HTTP_404_NOT_FOUND
+
+@app.errorhandler(HTTP_500_INTERNAL_SERVER_ERROR)
+def handle_500(e):
+    return jsonify({"error": "Server error."}), HTTP_500_INTERNAL_SERVER_ERROR
 
 #Run
 if __name__ == '__main__':
