@@ -47,7 +47,7 @@ class Expense(db.Model):
 
 class Income(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    Customer = db.Column(db.Integer, db.ForeignKey('Customer.id'))
+    customer = db.Column(db.Integer, db.ForeignKey('Customer.id'))
     project = db.Column(db.Integer, db.ForeignKey('project.id'))
     value = db.Column(db.Numeric(20,2), nullable = False)
     date = db.Column(db.Date, nullable = False)
@@ -82,7 +82,7 @@ class ProjectProducer(db.Model):
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    Customer = db.Column(db.Integer, db.ForeignKey('Customer.id'))
+    customer = db.Column(db.Integer, db.ForeignKey('Customer.id'))
     description = db.Column(db.String(250), nullable = False)
     full_value = db.Column(db.Numeric(20,2), nullable = False)
     task = db.relationship('Task', backref = 'project')
