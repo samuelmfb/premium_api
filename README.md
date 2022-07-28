@@ -1,3 +1,3 @@
-# premium_api
-Premium Studio Management API
-pip
+# Premium API
+A pretty simple API for activity management at Premium Studio.
+
