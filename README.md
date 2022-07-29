@@ -66,17 +66,21 @@ systemctl enable myproject.service
 
 ## Crie a configuraçao para o projeto no sites-available do Nginx
 ```
-  
 server {
     listen 80;
-    server_name your_domain www.your_domain;
-
-    location / {
-        include proxy_params;
-        proxy_pass http://unix:<caminho do sock>/myproject.sock;
+    server_name 127.0.0.1;
+   
+    location / {	
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://unix:/var/www/api_rest/run/flask_api.sock;
     }
 }
 ```
+
+* tive alguns problemas com permissões, que resolvi alterando o user do Nginx (no nginx.conf) para o mesmo usuário que está no .service da api.
 
 ## Inclua o link no sites-enabled 
 ```
